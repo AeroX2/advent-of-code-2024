@@ -8,14 +8,24 @@ type Coord = tuple
     y: int
 
 type Direction = enum
-    UP, DOWN, LEFT, RIGHT
+    UP, RIGHT, DOWN, LEFT
 
 let fileContent = readFile(paramStr(1));
 let data = splitLines(fileContent)
 
+proc moveForward(pos: Coord, dir: Direction): Coord =
+  case dir
+  of Direction.UP: (x: pos.x, y: pos.y - 1)
+  of Direction.DOWN: (x: pos.x, y: pos.y + 1)
+  of Direction.LEFT: (x: pos.x - 1, y: pos.y)
+  of Direction.RIGHT: (x: pos.x + 1, y: pos.y)
 
-proc simulate(data: seq[string], initAmount = -1): (Table[Coord, bool], bool) =
-    var seen = initTable[Coord, bool]()
+proc turnRight(dir: Direction): Direction =
+  Direction((dir.int + 1) mod 4)
+
+proc simulate(data: seq[string], initAmount = -1): (Table[Coord, Direction], bool) =
+    var seen = initTable[Coord, Direction](data.len * data[0].len)
+    # var test = initTable[int, Direction](data.len * data[0].len)
 
     var guardDirection: Direction = Direction.UP
     var guardPos: Coord;
@@ -28,21 +38,21 @@ proc simulate(data: seq[string], initAmount = -1): (Table[Coord, bool], bool) =
     var amount = initAmount;
     while amount != 0:
         amount -= 1
-        # if (seen.hasKey(guardPos)):
-        #     return (seen, true)
-        if (initAmount == -1):
-            seen[guardPos] = true
+
+        if (initAmount != -1):
+            discard
+            # Seems like Nim tables is slow? The code is faster without the early exit?
+            
+            # if (test.hasKey(guardPos.y*1337+guardPos.x)):
+            #     if (test[guardPos.y*1337+guardPos.x] == guardDirection):
+                    
+            #         return (seen, true)
+            # test[guardPos.y*1337+guardPos.x] = guardDirection
+        else:
+            seen[guardPos] = guardDirection
         
         let oldGuardPos = guardPos;
-        var newGuardPos: Coord;
-        if (guardDirection == Direction.UP):
-            newGuardPos = (x: guardPos.x, y: guardPos.y-1)
-        elif (guardDirection == Direction.DOWN):
-            newGuardPos = (x: guardPos.x, y: guardPos.y+1)
-        elif (guardDirection == Direction.LEFT):
-            newGuardPos = (x: guardPos.x-1, y: guardPos.y)
-        elif (guardDirection == Direction.RIGHT):
-            newGuardPos = (x: guardPos.x+1, y: guardPos.y)
+        var newGuardPos = moveForward(guardPos, guardDirection)
 
         if not (newGuardPos.x >= 0 and
             newGuardPos.x <= data[0].len-1 and
@@ -52,14 +62,7 @@ proc simulate(data: seq[string], initAmount = -1): (Table[Coord, bool], bool) =
 
         if (data[newGuardPos.y][newGuardPos.x] == '#'):
             newGuardPos = oldGuardPos;
-            if (guardDirection == Direction.UP):
-                guardDirection = Direction.RIGHT
-            elif (guardDirection == Direction.DOWN):
-                guardDirection = Direction.LEFT
-            elif (guardDirection == Direction.LEFT):
-                guardDirection = Direction.UP
-            elif (guardDirection == Direction.RIGHT):
-                guardDirection = Direction.DOWN
+            guardDirection = turnRight(guardDirection)
 
         guardPos = newGuardPos
 
