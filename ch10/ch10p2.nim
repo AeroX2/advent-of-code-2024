@@ -1,5 +1,4 @@
 import std/os
-import std/sets
 import std/strutils
 import std/sequtils
 import std/heapqueue
@@ -33,16 +32,12 @@ proc maxDist(start: Coord, ends: seq[Coord]): int =
 proc pathfind(data: seq[seq[int]], start: Coord): int =
     var score = 0
 
-    var seen = initHashSet[Path]()
     var queue = initHeapQueue[Path]()
     queue.push((path: @[start]))
     while queue.len > 0:
         let path = queue.pop()
         let pos = path.path[^1]
         let val = data[pos.y][pos.x]
-        if (seen.contains(path)):
-            continue
-        seen.incl(path)
 
         if (val == 9):
             score += 1

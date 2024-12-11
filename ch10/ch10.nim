@@ -28,15 +28,11 @@ proc maxDist(start: Coord, ends: seq[Coord]): int =
 proc pathfind(data: seq[seq[int]], start: Coord): int =
     var score = initHashSet[Coord]()
 
-    var seen = initHashSet[Coord]()
     var queue = initHeapQueue[Coord]()
     queue.push(start)
     while queue.len > 0:
         let pos = queue.pop()
         let val = data[pos.y][pos.x]
-        if (seen.contains(pos)):
-            continue
-        seen.incl(pos)
 
         if (val == 9):
             score.incl(pos)
