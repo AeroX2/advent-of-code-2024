@@ -13,7 +13,6 @@ func check(reactor: seq[int]): int =
     if (not safe):
         return 0
 
-    var problemDampener = false
     for i in 2..<reactor.len:
         let increasingV = (reactor[i] - reactor[i-1]) > 0;
         let safeV = abs(reactor[i] - reactor[i-1]);
