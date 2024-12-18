@@ -65,12 +65,9 @@ proc processOp(op: int, opCom: int) =
       raise newException(ValueError, "Wat")
 
 while pc <= instructions.len-2:
-  echo registers
   let op = instructions[pc]
   let opCom = instructions[pc+1]
   processOp(op, opCom)
   pc += 2
-echo ""
-echo registers
 
 
