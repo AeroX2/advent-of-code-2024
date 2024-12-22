@@ -40,7 +40,7 @@ var directionalPad = initTable[char, Coord]()
 directionalPad['^'] = (1,0)
 directionalPad['A'] = (2,0)
 directionalPad['<'] = (0,1)
-directionalPad['v'] = (1,1)
+directionalPad['@'] = (1,1)
 directionalPad['>'] = (2,1)
 
 let fileContent = readFile(paramStr(1));
@@ -76,3 +76,67 @@ proc pathFind(
 
       hq.push((np, direction, s+1, npa))
 
+proc convertPadPaths(t: Table[(char, char), seq[Coord]]): Table[(char, char), string] = 
+  var f = initTable[(char, char), string]()
+  for k in t.keys:
+    var s = ""
+
+    var pc = t[k][0]
+    for c in t[k][1..^1]:
+      let pd = c - pc
+      if (pd == (0,1)):
+        s = s & '@'
+      elif (pd == (0,-1)):
+        s = s & '^'
+      elif (pd == (-1,0)):
+        s = s & '<'
+      elif (pd == (1,0)):
+        s = s & '>'
+      else:
+        raiseAssert("Invalid")
+      pc = c
+
+    f[k] = s & "A"
+
+  return f
+
+proc parse(t: Table[(char, char), string], s: string): string =
+  var f = ""
+  var pc = 'A'
+  for c in s:
+    f = f & t[(pc,c)]
+    pc = c
+  return f
+
+
+var numpadPaths = initTable[(char, char), seq[Coord]]()
+for v in numpad.keys:
+  for v2 in numpad.keys:
+    numpadPaths[(v,v2)] = pathFind(numpad, numpad[v], numpad[v2])
+
+var directionalPadPaths = initTable[(char, char), seq[Coord]]()
+for v in directionalPad.keys:
+  for v2 in directionalPad.keys:
+    directionalPadPaths[(v,v2)] = pathFind(directionalPad, directionalPad[v], directionalPad[v2])
+
+let numpadPathsStr = convertPadPaths(numpadPaths)
+
+var directionalPadPathsStr = convertPadPaths(directionalPadPaths)
+for k in directionalPadPathsStr.keys:
+  directionalPadPathsStr[k] = sorted(directionalPadPathsStr[k], system.cmp[char]).join("")
+
+var sum = 0
+for line in lines:
+  echo line
+  var f = parse(numpadPathsStr, line)
+  echo f
+  f = parse(directionalPadPathsStr, f)
+  echo f
+  f = parse(directionalPadPathsStr, f)
+  echo f
+
+  var g = f.len * parseInt(line[0..^2])
+  echo f.len
+  echo parseInt(line[0..^2])
+  sum += g
+echo sum
