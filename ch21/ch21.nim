@@ -40,7 +40,7 @@ var directionalPad = initTable[char, Coord]()
 directionalPad['^'] = (1,0)
 directionalPad['A'] = (2,0)
 directionalPad['<'] = (0,1)
-directionalPad['@'] = (1,1)
+directionalPad['v'] = (1,1)
 directionalPad['>'] = (2,1)
 
 let fileContent = readFile(paramStr(1));
@@ -65,8 +65,11 @@ proc pathFind(
       continue
     seen.incl((p))
 
-    for direction in concat(@[pd],DIRECTIONS):
+    for direction in DIRECTIONS:
       let np = p + direction
+      let ssc = (endPoint - np)
+      let ss = abs(ssc.x)+abs(ssc.y)
+      let ns = if (direction == pd): ss else: ss+1
     
       if (not toSeq(grid.values).contains(np)):
         continue
@@ -74,7 +77,7 @@ proc pathFind(
       var npa = pa
       npa.add(np)
 
-      hq.push((np, direction, s+1, npa))
+      hq.push((np, direction, ns, npa))
 
 proc convertPadPaths(t: Table[(char, char), seq[Coord]]): Table[(char, char), string] = 
   var f = initTable[(char, char), string]()
@@ -85,7 +88,7 @@ proc convertPadPaths(t: Table[(char, char), seq[Coord]]): Table[(char, char), st
     for c in t[k][1..^1]:
       let pd = c - pc
       if (pd == (0,1)):
-        s = s & '@'
+        s = s & 'v'
       elif (pd == (0,-1)):
         s = s & '^'
       elif (pd == (-1,0)):
@@ -100,13 +103,55 @@ proc convertPadPaths(t: Table[(char, char), seq[Coord]]): Table[(char, char), st
 
   return f
 
-proc parse(t: Table[(char, char), string], s: string): string =
+proc parse(t: Table[(char, char), string], s: string, ppc: char = 'A'): string =
   var f = ""
-  var pc = 'A'
+  var pc = ppc
   for c in s:
     f = f & t[(pc,c)]
     pc = c
   return f
+
+proc permutations(sp: string): seq[string] =
+  var result = initSet[string]()  # A set to store unique permutations
+
+  proc permute(current: string, remaining: string) =
+    if remaining.len == 0:
+      result.incl(current)  # If no remaining characters, add the current permutation to the set
+    else:
+      for i in 0..<remaining.len:
+        # Skip duplicate characters in the remaining string
+        if i > 0 and remaining[i] == remaining[i-1]:
+          continue
+        # Choose the character at position i and permute the rest
+        permute(current & remaining[i], remaining[0..i-1] & remaining[i+1..^1])
+
+  # Sort the string to group identical characters together
+  var s = sp
+  s.sort()
+  permute("", s)
+  return result.toSeq()  # Convert the set to a sequence for output
+
+proc permuteAndParse(t: Table[(char, char), string], sp: string): string =
+  var s = sp
+
+  var minS = ""
+  var i = s.find("A")
+  while (i != -1):
+    let ps = s[0..i-1]
+    var ms = (1000000, "")
+
+    let ppp = permutations(ps)
+    for permutation in ppp:
+      let q = parse(t, permutation & "A")
+      if (q.len < ms[0]):
+        ms = (q.len, q)
+
+    minS = minS & ms[1]
+
+    s = s[i+1..^1]
+    i = s.find("A")
+  
+  return minS
 
 
 var numpadPaths = initTable[(char, char), seq[Coord]]()
@@ -120,19 +165,16 @@ for v in directionalPad.keys:
     directionalPadPaths[(v,v2)] = pathFind(directionalPad, directionalPad[v], directionalPad[v2])
 
 let numpadPathsStr = convertPadPaths(numpadPaths)
-
 var directionalPadPathsStr = convertPadPaths(directionalPadPaths)
-for k in directionalPadPathsStr.keys:
-  directionalPadPathsStr[k] = sorted(directionalPadPathsStr[k], system.cmp[char]).join("")
 
 var sum = 0
 for line in lines:
   echo line
   var f = parse(numpadPathsStr, line)
   echo f
-  f = parse(directionalPadPathsStr, f)
+  f = permuteAndParse(directionalPadPathsStr, f)
   echo f
-  f = parse(directionalPadPathsStr, f)
+  f = permuteAndParse(directionalPadPathsStr, f)
   echo f
 
   var g = f.len * parseInt(line[0..^2])
