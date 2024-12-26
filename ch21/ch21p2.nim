@@ -1,5 +1,3 @@
-# Needed a lot of help here and still don't fully understand it
-
 import std/os
 import std/sets
 import std/tables
@@ -153,6 +151,6 @@ proc findPathLength(
 
 var sum = 0
 for line in lines:
-  let levelKeyPads = @[numpad, directionalPad, directionalPad]
-  sum += parseInt(line[0..^2]) * findPathLength(toSeq(line), levelKeypads)
+  let levelKeyPads = @[numpad].concat(toSeq(0..<25).mapIt(directionalPad))
+  sum += parseInt(line[0..^2]) * findPathLength(toSeq(line), levelKeypads, 0, 25)
 echo sum
